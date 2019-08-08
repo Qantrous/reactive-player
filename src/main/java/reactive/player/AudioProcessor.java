@@ -55,7 +55,7 @@ public class AudioProcessor {
 
     private int getChunksCount() {
         Random rand = new Random();
-        return 15;
+        return chunkCount;
     }
 
     private void processChunks() {
