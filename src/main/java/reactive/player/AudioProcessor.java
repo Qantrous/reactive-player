@@ -21,10 +21,13 @@ public class AudioProcessor {
 
     private Disposable disposable = null;
 
-    public AudioProcessor(int id, String filename) {
+    private int chunkCount;
+
+    public AudioProcessor(int id, String filename, int chunkCount) {
         this.id = id;
         this.filename = filename;
         this.processedChunks = new HashMap<>();
+        this.chunkCount = chunkCount;
 
         processChunks();
     }
@@ -44,7 +47,7 @@ public class AudioProcessor {
                 System.out.println("Chunk " + getChunkFullName(chunkId) + " is not yet processed, processing");
                 disposeBackgroundProcessing();
 //                continueProcessingWithChunkId(chunkId);
-                return Mono.fromCallable(() -> proccesChunkAndUpdateProcessingId(chunkId));
+                return Mono.fromCallable(() -> processChunk(chunkId));
 
             }
 //        }
@@ -64,26 +67,12 @@ public class AudioProcessor {
 
     }
 
-//    private Mono<Chunk> processChunk(int chunkId) {
-//        return Mono.fromCallable(() -> {
-//            System.out.println("Processing chunk " + getChunkFullName(chunkId));
-//            Thread.sleep(1000);
-//            String chunkData = filename + "-" + chunkId;
-//            Chunk chunk = new Chunk(chunkId, chunkData.getBytes());
-//            synchronized (this) {
-//                processedChunks.put(chunkId, chunk);
-//            }
-//            System.out.println("Chunk " + getChunkFullName(chunkId) + " has been processed");
-//            return chunk;
-//        });
-//    }
-
     private Chunk processChunk(int chunkId) {
         System.out.println("Processing chunk " + getChunkFullName(chunkId));
         try {
             Random random = new Random();
             int rand = 1;
-            Thread.sleep(rand * 500);
+            Thread.sleep(rand * 200);
         } catch (InterruptedException e) {
 
         }

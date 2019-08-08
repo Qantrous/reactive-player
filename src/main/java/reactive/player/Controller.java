@@ -2,6 +2,7 @@ package reactive.player;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Scheduler;
 import reactor.core.scheduler.Schedulers;
 
 import java.util.*;
@@ -12,16 +13,12 @@ public class Controller {
 
     private List<AudioProcessor> audioProcessors;
     private List<AudioPlayer> audioPlayers;
+    private int chunkCount;
 
-    public Controller(List<AudioProcessor> audioProcessor, List<AudioPlayer> audioPlayers) {
+    public Controller(List<AudioProcessor> audioProcessor, List<AudioPlayer> audioPlayers, int chunkCount) {
         this.audioProcessors = audioProcessor;
         this.audioPlayers = audioPlayers;
-    }
-
-    public Mono<List<Chunk>> getChunksByTime(int time) {
-        int chunkId = timeToChunkId(time);
-        List<Mono<Chunk>> results = audioProcessors.stream().map(p -> p.getChunk(chunkId).subscribeOn(Schedulers.parallel())).collect(Collectors.toList());
-        return Mono.zip(results, (Object[] chunksAsObjects) -> (Arrays.stream(chunksAsObjects).map(o -> (Chunk) o)).collect(Collectors.toList()));
+        this.chunkCount = chunkCount;
     }
 
 
@@ -51,19 +48,26 @@ public class Controller {
 //    }
 
     public Mono<String> play() {
+        Scheduler playersScheduler = Schedulers.newParallel("qwerty");
         List<Integer> chunksToGet = new ArrayList<>();
-        for (int i =0; i < 15; i ++) {
+
+        for (int i =0; i < chunkCount; i ++) {
             chunksToGet.add(i);
         }
 
         List<Mono<String>> results = chunksToGet.stream().map(chunkId -> {
             System.out.println("GETTING CHUNK WITH ID " + chunkId);
             return getChunksById(chunkId).flatMap((List<Chunk> chunks) -> {
-                List<Mono<Boolean>> plays = chunks.stream().map(chunk -> audioPlayers.get(chunk.getProcessorId()).play(chunk).subscribeOn(Schedulers.parallel())).collect(Collectors.toList());
+                List<Mono<Boolean>> plays = chunks.stream().map(chunk ->
+                        audioPlayers
+                                .get(chunk.getProcessorId())
+                                .play(chunk).subscribeOn(playersScheduler))
+                        .collect(Collectors.toList());
                 return Mono.zip(plays, (Object[] playResultsAsObject) -> "done");
             });
         }).collect(Collectors.toList());
 
         return Mono.zip(results, (Object[] playResultsAsObject) -> "done");
     }
+
 }

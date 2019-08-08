@@ -1,5 +1,6 @@
 package reactive.player;
 
+import reactor.core.Disposable;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
 
@@ -17,7 +18,7 @@ public class Application {
 //        System.out.println(chunks);
 
         try {
-            Thread.sleep(2000);
+            Thread.sleep(1000);
             System.out.println("--------------------------STARTING--------------------------");
             controller.play().subscribe();
 
@@ -32,13 +33,14 @@ public class Application {
     }
 
     private static Controller createController() {
+        int chunks = 15;
         List<AudioProcessor> audioProcessors = new ArrayList<>();
         List<AudioPlayer> audioPlayers = new ArrayList<>();
         for (int i=0; i < 4; i++) {
-            audioProcessors.add(new AudioProcessor(i,"file-" + (i + 1)));
+            audioProcessors.add(new AudioProcessor(i,"file-" + (i + 1),chunks));
             audioPlayers.add(new AudioPlayer(i));
         }
 
-        return new Controller(audioProcessors, audioPlayers);
+        return new Controller(audioProcessors, audioPlayers, chunks);
     }
 }
